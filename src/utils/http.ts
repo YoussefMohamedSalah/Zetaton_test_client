@@ -12,7 +12,7 @@ export const http = axios.create({
 // Change request data/error here
 http.interceptors.request.use(
   (config) => {
-    const token: string | null = localStorage.getItem("access_token");
+    const token: string | null = localStorage.getItem("token");
     if (token) {
       // @ts-expect-error
       config.headers = {

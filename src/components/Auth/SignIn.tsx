@@ -2,38 +2,48 @@ import { Link } from "react-router-dom";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import useApp from "hooks/useApp";
-import { useAuth } from "contexts/AuthContext";
 import { AuthSignInInput } from "../../types/signIn";
 import { signInValidation } from "validators/SignInValidation";
 import { Pages } from "enums/pages";
-import { useSignIn } from "framework/auth/signIn";
+import Loading from "components/common/Loading";
+
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, signInFirebase } from "../../firebaseIndex";
+import { useAuth } from "contexts/AuthContext";
 
 const defaultValues: AuthSignInInput = { email: "", password: "" };
 
 const SignIn: React.FC = () => {
-  const { setSession } = useAuth();
   const { push } = useApp();
+  const { setSession } = useAuth();
+
+  const [user, loading, error] = useAuthState(auth);
   const { handleSubmit, register, formState: { isSubmitting } } = useForm<any>({
     resolver: yupResolver(signInValidation),
     mode: "onChange",
     defaultValues
   });
-  const { mutateAsync } = useSignIn();
 
   const onSubmit: SubmitHandler<AuthSignInInput> = async (
     data: AuthSignInInput
   ) => {
     try {
-      const result = await mutateAsync(data);
-      setSession(result);
-      localStorage.setItem("session", JSON.stringify(result));
-      push(Pages.DASHBOARD);
+      await signInFirebase(data.email, data.password);
+      if (user) {
+        localStorage.setItem("user", JSON.stringify(user));
+        const userToken = await user.getIdToken();
+        localStorage.setItem("token", JSON.stringify(userToken));
+        setSession(userToken);
+        push(Pages.DASHBOARD);
+      }
     } catch (err) {
       //  @TODO should handle error
       console.log(err);
     }
   };
 
+  if (loading) return <Loading />;
+  if (error) return <div>error</div>;
   return (
     <div className="d-flex justify-content-center align-items-center border-0 rounded-lg auth-h100">
       <div
@@ -87,7 +97,7 @@ const SignIn: React.FC = () => {
         <div className="col-12 text-center mt-4">
           <span className="">
             Don't have an account?{" "}
-            <Link to="signup" title="Sign in" className="text-secondary">
+            <Link to="/signup" title="Sign in" className="text-secondary">
               &nbsp;Sign up here
             </Link>
           </span>

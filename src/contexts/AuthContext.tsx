@@ -19,7 +19,7 @@ interface Props {
 }
 
 export const AuthProvider: React.FC<Props> = ({ children }) => {
-  const [session, setSession] = useState(null);
+  const [session, setSession] = useState<any | null>(null);
 
   return (
     <AuthContext.Provider value={{ session, setSession }}>

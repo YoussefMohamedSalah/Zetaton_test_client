@@ -3,5 +3,6 @@ export interface AuthSignUpInput {
   last_name: string;
   email: string;
   password: string;
-  phone_number: string;
+  password_confirmation?: string;
+  phone_number?: string;
 }

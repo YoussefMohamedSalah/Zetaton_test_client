@@ -1,9 +1,10 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom";
-import { useAuth } from "contexts/AuthContext";
 import useApp from "hooks/useApp";
 import Loading from "components/common/Loading";
 import { Pages } from "enums/pages";
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth } from "../firebaseIndex";
 
 const SignIn = lazy(() => import("../components/Auth/SignIn"));
 const Auth = lazy(() => import("../components/Auth/Auth"));
@@ -12,21 +13,22 @@ type IState = { initialized: boolean };
 const INITIAL_STATE: IState = { initialized: false };
 
 const AuthIndex: React.FC = () => {
+  const [user, loading] = useAuthState(auth);
   const [state, setState] = useState<IState>(INITIAL_STATE);
   const { initialized } = state;
   const { push } = useApp();
-  const { setSession } = useAuth();
 
-  useEffect(() => {
-    const session: string | null = localStorage.getItem("session");
-    if (session) {
-      setSession(session);
-      push(Pages.DASHBOARD);
-    } else {
-      setState(prevState => ({ ...prevState, initialized: true }));
-    }
+  useEffect(
+    () => {
+      if (user) {
+        push(Pages.DASHBOARD);
+      } else {
+        setState(prevState => ({ ...prevState, initialized: true }));
+      }
+    },
     // eslint-disable-next-line
-  }, []);
+    [user, loading]
+  );
 
   if (!initialized) return <Loading />;
   return (
